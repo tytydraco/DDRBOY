@@ -37,14 +37,12 @@ void Game::menu() {
 	}
 }
 
-void Game::randomize(bool reset = true) {
+void Game::randomize() {
 	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
-		if (reset || button_queue[i].button >= 7 || button_queue[i].button == 0) {
-			uint8_t random_button = random(1, 7);
-			button_queue[i].button = random_button; //1-6 L,R,U,D,A,B
-			button_queue[i].coords[0] = random_button * 16;
-			button_queue[i].coords[1] = HEIGHT + (i * 16);
-		}
+		uint8_t random_button = random(1, 7);
+		button_queue[i].button = random_button; //1-6 L,R,U,D,A,B
+		button_queue[i].coords[0] = random_button * 16;
+		button_queue[i].coords[1] = HEIGHT + (i * 16);
 		
 	}
 }
@@ -59,48 +57,56 @@ void Game::play() {
 	arduboy.drawBitmap(80, 0, A_PRESSED_ICON, 16, 16, WHITE);
 	arduboy.drawBitmap(96, 0, B_PRESSED_ICON, 16, 16, WHITE);
 	
-	if (button_queue[(sizeof(button_queue) / sizeof(button_queue[0])) - 1].button >= 7) {
-		randomize(false);
-	}
-	
 	// check for next button press needed
 	uint8_t next_index;
 	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
-		if (button_queue[i].button >= 1 && button_queue[i].button <= 6 && button_queue[i].coords[1] >= -16) {
+		if (button_queue[i].button != 0 && button_queue[i].coords[1] <= 16 && button_queue[i].coords[1] >= -16) {
 			next_index = i;
 			break; 
 		}
 	}
 		
 	// detect the press and check
-	if (button_queue[next_index].coords[1] >= -16 && button_queue[next_index].coords[1] <= 16) {
-		if (button_queue[next_index].button == 1 && arduboy.justPressed(UP_BUTTON)) {
-			button_queue[next_index].button = 7;
-			score++;
-		} else if (button_queue[next_index].button == 2 && arduboy.justPressed(DOWN_BUTTON)) {
-			button_queue[next_index].button = 8;
-			score++;
-		} else if (button_queue[next_index].button == 3 && arduboy.justPressed(LEFT_BUTTON)) {
-			button_queue[next_index].button = 9;
-			score++;
-		} else if (button_queue[next_index].button == 4 && arduboy.justPressed(RIGHT_BUTTON)) {
-			button_queue[next_index].button = 10;
-			score++;
-		} else if (button_queue[next_index].button == 5 && arduboy.justPressed(A_BUTTON)) {
-			button_queue[next_index].button = 11;
-			score++;
-		} else if (button_queue[next_index].button == 6 && arduboy.justPressed(B_BUTTON)) {
-			button_queue[next_index].button = 12;
-			score++;
-		} else if (anything_pressed()) {
-			game_state = 3;
-			return;
-		}
-		
+	if (button_queue[next_index].button == 1 && arduboy.justPressed(UP_BUTTON)) {
+		button_queue[next_index].button = 0;
+		score++;
+	} else if (button_queue[next_index].button == 2 && arduboy.justPressed(DOWN_BUTTON)) {
+		button_queue[next_index].button = 0;
+		score++;
+	} else if (button_queue[next_index].button == 3 && arduboy.justPressed(LEFT_BUTTON)) {
+		button_queue[next_index].button = 0;
+		score++;
+	} else if (button_queue[next_index].button == 4 && arduboy.justPressed(RIGHT_BUTTON)) {
+		button_queue[next_index].button = 0;
+		score++;
+	} else if (button_queue[next_index].button == 5 && arduboy.justPressed(A_BUTTON)) {
+		button_queue[next_index].button = 0;
+		score++;
+	} else if (button_queue[next_index].button == 6 && arduboy.justPressed(B_BUTTON)) {
+		button_queue[next_index].button = 0;
+		score++;
 	} else if (anything_pressed()) {
 		game_state = 3;
 		return;
 	}
+	
+	// recreate after we know button it is clicked properly
+	// this avoids regenerating even when the user didnt click the button yet
+	if (anything_pressed()) {
+		// find which y coordinate is the farthest down (highest in y)
+		int lowest_button_y = 0;
+		for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
+			if (button_queue[i].coords[1] > lowest_button_y) lowest_button_y = button_queue[i].coords[1];
+		}
+		
+		// place this button just below the lowest button
+		// this solves the error with misaligned buttons
+		uint8_t random_button = random(1, 7);
+		button_queue[next_index].button = random_button; //1-6 L,R,U,D,A,B
+		button_queue[next_index].coords[0] = random_button * 16;
+		button_queue[next_index].coords[1] = lowest_button_y + 16;
+	}
+	
 
 	// move the buttons
 	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
@@ -109,7 +115,7 @@ void Game::play() {
 		int x = button_queue[i].coords[0];
 		int y = button_queue[i].coords[1];
 		
-		if (button_queue[i].coords[1] < -16 && button_queue[i].button <= 6) {
+		if (button_queue[i].coords[1] < -16) {
 			game_state = 3;
 			return;
 		}
@@ -137,7 +143,7 @@ void Game::play() {
 				case 6:
 					arduboy.drawBitmap(x, y, B_ICON, 16, 16, WHITE);
 					break;
-				case 7:
+				/*case 7:
 					arduboy.drawBitmap(x, y, UP_PRESSED_ARROW, 16, 16, WHITE);
 					break;
 				case 8:
@@ -154,7 +160,7 @@ void Game::play() {
 					break;
 				case 12:
 					arduboy.drawBitmap(x, y, B_PRESSED_ICON, 16, 16, WHITE);
-					break;
+					break;*/
 				default:
 					break;
 			}
@@ -163,7 +169,7 @@ void Game::play() {
 		
 	// run timer once first pressed
 	arduboy.setTextSize(1);
-	arduboy.setCursor(0, 0);
+	arduboy.setCursor(0, HEIGHT - 16);
 	arduboy.print(score);
 }
 

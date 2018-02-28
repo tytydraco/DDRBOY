@@ -5,10 +5,10 @@ class Game {
 	Arduboy2 &arduboy;
 	unsigned int reset_highscore_hold = 0;
 	bool anything_pressed();
-	void randomize(bool reset = true);
+	void randomize();
 	struct Key {
 		uint8_t button;
-		int coords[4];
+		int coords[2];
 	};
 	public:
 		Game(Arduboy2 &n_arduboy) : arduboy(n_arduboy) {}
@@ -16,7 +16,7 @@ class Game {
 		bool timer_active = false; // run the timer when true
 		unsigned int score = 0; // duration in seconds timer has been running
 		unsigned int highscore = 0; // the last score
-		Key button_queue[32]; // use 1-6 as UP,LEFT,DOWN,RIGHT instead of 0-5 because an uninitialized int is always 0
+		Key button_queue[4]; // use 1-6 as UP,LEFT,DOWN,RIGHT instead of 0-5 because an uninitialized int is always 0
 		
 		void menu();
 		void play();
