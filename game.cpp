@@ -58,7 +58,7 @@ void Game::play() {
 	arduboy.drawBitmap(96, 0, B_PRESSED_ICON, 16, 16, WHITE);
 	
 	// check for next button press needed
-	uint8_t next_index;
+	uint8_t next_index = 0;
 	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
 		if (button_queue[i].button != 0 && button_queue[i].coords[1] <= 16 && button_queue[i].coords[1] >= -16) {
 			next_index = i;
@@ -67,28 +67,34 @@ void Game::play() {
 	}
 		
 	// detect the press and check
-	if (button_queue[next_index].button == 1 && arduboy.justPressed(UP_BUTTON)) {
-		button_queue[next_index].button = 0;
-		score++;
-	} else if (button_queue[next_index].button == 2 && arduboy.justPressed(DOWN_BUTTON)) {
-		button_queue[next_index].button = 0;
-		score++;
-	} else if (button_queue[next_index].button == 3 && arduboy.justPressed(LEFT_BUTTON)) {
-		button_queue[next_index].button = 0;
-		score++;
-	} else if (button_queue[next_index].button == 4 && arduboy.justPressed(RIGHT_BUTTON)) {
-		button_queue[next_index].button = 0;
-		score++;
-	} else if (button_queue[next_index].button == 5 && arduboy.justPressed(A_BUTTON)) {
-		button_queue[next_index].button = 0;
-		score++;
-	} else if (button_queue[next_index].button == 6 && arduboy.justPressed(B_BUTTON)) {
-		button_queue[next_index].button = 0;
-		score++;
+	if (button_queue[next_index].coords[1] <= 16 && button_queue[next_index].coords[1] >= -16) {
+		if (button_queue[next_index].button == 1 && arduboy.justPressed(UP_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+		} else if (button_queue[next_index].button == 2 && arduboy.justPressed(DOWN_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+		} else if (button_queue[next_index].button == 3 && arduboy.justPressed(LEFT_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+		} else if (button_queue[next_index].button == 4 && arduboy.justPressed(RIGHT_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+		} else if (button_queue[next_index].button == 5 && arduboy.justPressed(A_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+		} else if (button_queue[next_index].button == 6 && arduboy.justPressed(B_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+		} else if (anything_pressed()) {
+			game_state = 3;
+			return;
+		}
 	} else if (anything_pressed()) {
 		game_state = 3;
 		return;
 	}
+	
 	
 	// recreate after we know button it is clicked properly
 	// this avoids regenerating even when the user didnt click the button yet
