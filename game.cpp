@@ -39,18 +39,10 @@ void Game::menu() {
 }
 
 void Game::play() {
-	// start timer once first pressed
-	if (button_queue[0] == 0) {
-		timer_active = true;
-		arduboy.setTextSize(1);
-		arduboy.setCursor(0, 0);
-		arduboy.print(timer_seconds);
-	}
-	
 	// see if everything is finished
 	bool all_clear = true;
 	for (size_t i = 0; i < sizeof(button_queue); i++) {
-		if (button_queue[i] != 0) {
+		if (button_queue[i] >= 1 && button_queue[i] <= 6) {
 			all_clear = false;
 			break;
 		}
@@ -58,13 +50,12 @@ void Game::play() {
 	// if it is, end the game
 	if (all_clear) {
 		game_state = 3;
-		timer_active = false;
 	}
 
 	// check for next button press needed
 	uint8_t next_index;
 	for (size_t i = 0; i < sizeof(button_queue); i++) {
-		if (button_queue[i] != 0) {
+		if (button_queue[i] >= 1 && button_queue[i] <= 6) {
 			next_index = i;
 			break; 
 		}
@@ -72,20 +63,19 @@ void Game::play() {
 	
 	// detect the press and check
 	if (button_queue[next_index] == 1 && arduboy.justPressed(UP_BUTTON)) {
-		button_queue[next_index] = 0;
+		button_queue[next_index] = 7;
 	} else if (button_queue[next_index] == 2 && arduboy.justPressed(DOWN_BUTTON)) {
-		button_queue[next_index] = 0;
+		button_queue[next_index] = 8;
 	} else if (button_queue[next_index] == 3 && arduboy.justPressed(LEFT_BUTTON)) {
-		button_queue[next_index] = 0;
+		button_queue[next_index] = 9;
 	} else if (button_queue[next_index] == 4 && arduboy.justPressed(RIGHT_BUTTON)) {
-		button_queue[next_index] = 0;
+		button_queue[next_index] = 10;
 	} else if (button_queue[next_index] == 5 && arduboy.justPressed(A_BUTTON)) {
-		button_queue[next_index] = 0;
+		button_queue[next_index] = 11;
 	} else if (button_queue[next_index] == 6 && arduboy.justPressed(B_BUTTON)) {
-		button_queue[next_index] = 0;
+		button_queue[next_index] = 12;
 	} else if (button_queue[next_index] != 0 && anything_pressed()) {
 		game_state = 2;
-		timer_active = false;
 	}
 
 	// draw the buttons
@@ -130,13 +120,41 @@ void Game::play() {
 		case 6:
 			arduboy.drawBitmap(x, y, B_ICON, 16, 16, WHITE);
 			break;
+		case 7:
+			arduboy.drawBitmap(x, y, UP_PRESSED_ARROW, 16, 16, WHITE);
+			break;
+		case 8:
+			arduboy.drawBitmap(x, y, DOWN_PRESSED_ARROW, 16, 16, WHITE);
+			break;
+		case 9:
+			arduboy.drawBitmap(x, y, LEFT_PRESSED_ARROW, 16, 16, WHITE);
+			break;
+		case 10:
+			arduboy.drawBitmap(x, y, RIGHT_PRESSED_ARROW, 16, 16, WHITE);
+			break;
+		case 11:
+			arduboy.drawBitmap(x, y, A_PRESSED_ICON, 16, 16, WHITE);
+			break;
+		case 12:
+			arduboy.drawBitmap(x, y, B_PRESSED_ICON, 16, 16, WHITE);
+			break;
 		default:
 			break;
 		}
 	}
+	
+	// run timer once first pressed
+	if (button_queue[0] >= 7) {
+		timer_active = true;
+		arduboy.setTextSize(1);
+		arduboy.setCursor(0, 0);
+		arduboy.print(timer_seconds);
+	}
+	
 }
 
 void Game::game_over() {
+	timer_active = false;
 	arduboy.setTextSize(3);
 	arduboy.setCursor(30, 10);
 	arduboy.println("GAME");
@@ -150,6 +168,7 @@ void Game::game_over() {
 }
 
 void Game::win() {
+	timer_active = false;
 	arduboy.setTextSize(3);
 	arduboy.print(timer_seconds);
 	arduboy.setTextSize(2);
