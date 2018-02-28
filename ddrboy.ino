@@ -19,6 +19,7 @@ void loop() {
 	arduboy.clear();
 
 	switch (game.game_state) {
+		
 		case 0:
 			game.menu();
 			break;
@@ -40,6 +41,5 @@ void loop() {
 	}
 
 	// increase the timer if it is active (1000 because ms)
-	if (game.timer_active) game.timer_seconds += 1000 / FRAMERATE;
 	arduboy.display();
 }
