@@ -16,7 +16,7 @@ class Game {
 		bool timer_active = false; // run the timer when true
 		unsigned int score = 0; // duration in seconds timer has been running
 		unsigned int highscore = 0; // the last score
-		Key button_queue[4]; // use 1-6 as UP,LEFT,DOWN,RIGHT instead of 0-5 because an uninitialized int is always 0
+		Key button_queue[5]; // use 1-6 as UP,LEFT,DOWN,RIGHT instead of 0-5 because an uninitialized int is always 0
 		
 		void menu();
 		void play();

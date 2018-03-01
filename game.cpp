@@ -50,12 +50,41 @@ void Game::randomize() {
 void Game::play() {
 	arduboy.setFrameRate(FRAMERATE + score / 2);
 	// print the target buttons
-	arduboy.drawBitmap(16, 0, UP_PRESSED_ARROW, 16, 16, WHITE);
-	arduboy.drawBitmap(32, 0, DOWN_PRESSED_ARROW, 16, 16, WHITE);
-	arduboy.drawBitmap(48, 0, LEFT_PRESSED_ARROW, 16, 16, WHITE);
-	arduboy.drawBitmap(64, 0, RIGHT_PRESSED_ARROW, 16, 16, WHITE);
-	arduboy.drawBitmap(80, 0, A_PRESSED_ICON, 16, 16, WHITE);
-	arduboy.drawBitmap(96, 0, B_PRESSED_ICON, 16, 16, WHITE);
+	if (arduboy.pressed(UP_BUTTON)) {
+		arduboy.drawBitmap(16, 0, UP_ARROW, 16, 16, WHITE);
+	} else {
+		arduboy.drawBitmap(16, 0, UP_PRESSED_ARROW, 16, 16, WHITE);
+	}
+	
+	if (arduboy.pressed(DOWN_BUTTON)) {
+		arduboy.drawBitmap(32, 0, DOWN_ARROW, 16, 16, WHITE);
+	} else {
+		arduboy.drawBitmap(32, 0, DOWN_PRESSED_ARROW, 16, 16, WHITE);
+	}
+	
+	if (arduboy.pressed(LEFT_BUTTON)) {
+		arduboy.drawBitmap(48, 0, LEFT_ARROW, 16, 16, WHITE);
+	} else {
+		arduboy.drawBitmap(48, 0, LEFT_PRESSED_ARROW, 16, 16, WHITE);
+	}
+	
+	if (arduboy.pressed(RIGHT_BUTTON)) {
+		arduboy.drawBitmap(64, 0, RIGHT_ARROW, 16, 16, WHITE);
+	} else {
+		arduboy.drawBitmap(64, 0, RIGHT_PRESSED_ARROW, 16, 16, WHITE);
+	}
+	
+	if (arduboy.pressed(A_BUTTON)) {
+		arduboy.drawBitmap(80, 0, A_ICON, 16, 16, WHITE);
+	} else {
+		arduboy.drawBitmap(80, 0, A_PRESSED_ICON, 16, 16, WHITE);
+	}
+	
+	if (arduboy.pressed(B_BUTTON)) {
+		arduboy.drawBitmap(96, 0, B_ICON, 16, 16, WHITE);
+	} else {
+		arduboy.drawBitmap(96, 0, B_PRESSED_ICON, 16, 16, WHITE);
+	}
 	
 	// check for next button press needed
 	uint8_t next_index = 0;
@@ -149,24 +178,6 @@ void Game::play() {
 				case 6:
 					arduboy.drawBitmap(x, y, B_ICON, 16, 16, WHITE);
 					break;
-				/*case 7:
-					arduboy.drawBitmap(x, y, UP_PRESSED_ARROW, 16, 16, WHITE);
-					break;
-				case 8:
-					arduboy.drawBitmap(x, y, DOWN_PRESSED_ARROW, 16, 16, WHITE);
-					break;
-				case 9:
-					arduboy.drawBitmap(x, y, LEFT_PRESSED_ARROW, 16, 16, WHITE);
-					break;
-				case 10:
-					arduboy.drawBitmap(x, y, RIGHT_PRESSED_ARROW, 16, 16, WHITE);
-					break;
-				case 11:
-					arduboy.drawBitmap(x, y, A_PRESSED_ICON, 16, 16, WHITE);
-					break;
-				case 12:
-					arduboy.drawBitmap(x, y, B_PRESSED_ICON, 16, 16, WHITE);
-					break;*/
 				default:
 					break;
 			}
