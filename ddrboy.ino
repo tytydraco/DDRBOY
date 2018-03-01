@@ -1,6 +1,6 @@
-#import <Arduboy2.h>
-#import "globals.h"
-#import "game.h"
+#include <Arduboy2.h>
+#include "globals.h"
+#include "game.h"
 
 Arduboy2 arduboy;
 Game game(arduboy);
@@ -29,10 +29,6 @@ void loop() {
 			break;
 
 		case 2:
-			game.game_over();
-			break;
-
-		case 3:
 			game.win();
 			break;
 

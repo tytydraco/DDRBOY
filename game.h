@@ -20,7 +20,6 @@ class Game {
 		
 		void menu();
 		void play();
-		void game_over();
 		void win();
 		void read_highscore();
 		void write_highscore();

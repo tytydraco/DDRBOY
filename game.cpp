@@ -1,7 +1,7 @@
-#import <Arduboy2.h>
-#import "globals.h"
-#import "sprites.h"
-#import "game.h"
+#include <Arduboy2.h>
+#include "globals.h"
+#include "sprites.h"
+#include "game.h"
 
 void Game::menu() {
 	arduboy.setFrameRate(FRAMERATE);
@@ -39,7 +39,7 @@ void Game::menu() {
 
 void Game::randomize() {
 	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
-		uint8_t random_button = random(1, 7);
+		uint8_t random_button = random(MIN_RANDOMIZE, MAX_RANDOMIZE);
 		button_queue[i].button = random_button; //1-6 L,R,U,D,A,B
 		button_queue[i].coords[0] = random_button * 16;
 		button_queue[i].coords[1] = HEIGHT + (i * 16);
@@ -116,11 +116,11 @@ void Game::play() {
 			button_queue[next_index].button = 0;
 			score++;
 		} else if (anything_pressed()) {
-			game_state = 3;
+			game_state = 2;
 			return;
 		}
 	} else if (anything_pressed()) {
-		game_state = 3;
+		game_state = 2;
 		return;
 	}
 	
@@ -136,7 +136,7 @@ void Game::play() {
 		
 		// place this button just below the lowest button
 		// this solves the error with misaligned buttons
-		uint8_t random_button = random(1, 7);
+		uint8_t random_button = random(MIN_RANDOMIZE, MAX_RANDOMIZE);
 		button_queue[next_index].button = random_button; //1-6 L,R,U,D,A,B
 		button_queue[next_index].coords[0] = random_button * 16;
 		button_queue[next_index].coords[1] = lowest_button_y + 16;
@@ -151,7 +151,7 @@ void Game::play() {
 		int y = button_queue[i].coords[1];
 		
 		if (button_queue[i].coords[1] < -16) {
-			game_state = 3;
+			game_state = 2;
 			return;
 		}
 
@@ -186,40 +186,20 @@ void Game::play() {
 		
 	// run timer once first pressed
 	arduboy.setTextSize(1);
-	arduboy.setCursor(0, HEIGHT - 16);
+	arduboy.setCursor(0, HEIGHT - 7);
 	arduboy.print(score);
 }
 
-void Game::game_over() {
+void Game::win() {
+	arduboy.setTextSize(1);
+	arduboy.print(score);
+    arduboy.print("PTS");
 	timer_active = false;
 	arduboy.setTextSize(3);
 	arduboy.setCursor(30, 10);
 	arduboy.println("GAME");
 	arduboy.setCursor(30, 35);
 	arduboy.println("OVER");
-	arduboy.setTextSize(1);
-	if (arduboy.justPressed(A_BUTTON)) {
-		game_state = 0;
-		read_highscore();
-	}
-}
-
-void Game::win() {
-	timer_active = false;
-	arduboy.setTextSize(3);
-	arduboy.print(score);
-	arduboy.setTextSize(2);
-    arduboy.println("PTS\n");
-	int score_diff = score - highscore;
-	if (score_diff < 0 && highscore != 0) {
-		arduboy.print(score_diff / -1);
-		arduboy.setTextSize(1);
-		arduboy.print("PTS");
-		arduboy.setTextSize(2);
-		arduboy.print("\nSHORT!");
-	} else {
-		arduboy.print("HIGHSCORE!");
-	}
 	
     if (arduboy.justPressed(A_BUTTON)) {
 		write_highscore();
