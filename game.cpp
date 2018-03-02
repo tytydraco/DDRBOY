@@ -1,7 +1,9 @@
 #include <Arduboy2.h>
+#include <ArduboyTones.h>
 #include "globals.h"
 #include "sprites.h"
 #include "game.h"
+#include "sounds.h"
 
 void Game::menu() {
 	arduboy.setFrameRate(FRAMERATE);
@@ -17,15 +19,34 @@ void Game::menu() {
 	arduboy.setTextSize(2);
 	arduboy.setCursor(0, HEIGHT - 15);
 	arduboy.println("START");
-	arduboy.drawBitmap(WIDTH - 16, HEIGHT - 16, A_ICON, 16, 16, WHITE);
 	
-	// play
-	if (arduboy.justPressed(A_BUTTON)) {
-		randomize();
-		game_state = 1;
-		score = 0;
+	// handle sound
+	if (sound_on) {
+		arduboy.drawBitmap(WIDTH - 16, HEIGHT - 32, MUSIC_ON, 16, 16, WHITE);
+	} else {
+		arduboy.drawBitmap(WIDTH - 16, HEIGHT - 32, MUSIC_OFF, 16, 16, WHITE);
 	}
 	
+	// toggle sound
+	if (arduboy.justPressed(B_BUTTON)) {
+		if (sound_on) {
+			arduboy.audio.off();
+		} else {
+			arduboy.audio.on();
+			sound.tones(ok);
+		}
+		sound_on = !sound_on;
+	}
+	
+	arduboy.drawBitmap(WIDTH - 16, HEIGHT - 16, A_ICON, 16, 16, WHITE);
+	
+	// difficulty select
+	if (arduboy.justPressed(A_BUTTON)) {
+		game_state = 3;
+		sound.tones(ok);
+	}
+	
+	// reset highscore
 	if (arduboy.everyXFrames(FRAMERATE) && arduboy.pressed(B_BUTTON)) {
 		reset_highscore_hold++;
 		if (reset_highscore_hold == 3) {
@@ -33,7 +54,68 @@ void Game::menu() {
 			read_highscore();
 			reset_highscore_hold = 0;
 		}
-		
+	}
+}
+
+void Game::select_difficulty() {
+	// change difficulty with buttons
+	if (arduboy.justPressed(LEFT_BUTTON)) {
+		if (difficulty > MIN_DIFFICULTY) {
+			difficulty--;
+		}
+	} else if (arduboy.justPressed(RIGHT_BUTTON)) {
+		if (difficulty < MAX_DIFFICULTY) {
+			difficulty++;
+		}
+	}
+	
+	// print difficulty
+	arduboy.setTextSize(3);
+	switch (difficulty) {
+		case 1:
+			arduboy.setCursor(30, 22);
+			arduboy.println(DIFFICULTY_1_NAME);
+			break;
+		case 2:
+			arduboy.setCursor(2, 22);
+			arduboy.println(DIFFICULTY_2_NAME);
+			break;
+		case 3:
+			arduboy.setCursor(30, 22);
+			arduboy.println(DIFFICULTY_3_NAME);
+			break;
+		case 4:
+			arduboy.setCursor(10, 22);
+			arduboy.println(DIFFICULTY_4_NAME);
+			break;
+		default:
+			break;
+	}
+	
+	// play
+	if (arduboy.justPressed(A_BUTTON)) {
+		switch (difficulty) {
+			case 1:
+				arduboy.setFrameRate(DIFFICULTY_1_FPS);
+				break;
+			case 2:
+				arduboy.setFrameRate(DIFFICULTY_2_FPS);
+				break;
+			case 3:
+				arduboy.setFrameRate(DIFFICULTY_3_FPS);
+				break;
+			case 4:
+				arduboy.setFrameRate(DIFFICULTY_4_FPS);
+				break;
+			default:
+				break;
+		}
+		randomize();
+		game_state = 1;
+		score = 0;
+		sound.tones(start);
+	} else if (arduboy.justPressed(B_BUTTON)) {
+		game_state = 0;
 	}
 }
 
@@ -43,12 +125,10 @@ void Game::randomize() {
 		button_queue[i].button = random_button; //1-6 L,R,U,D,A,B
 		button_queue[i].coords[0] = random_button * 16;
 		button_queue[i].coords[1] = HEIGHT + (i * 16);
-		
 	}
 }
 
 void Game::play() {
-	arduboy.setFrameRate(FRAMERATE + score / 2);
 	// print the target buttons
 	if (arduboy.pressed(UP_BUTTON)) {
 		arduboy.drawBitmap(16, 0, UP_ARROW, 16, 16, WHITE);
@@ -86,6 +166,8 @@ void Game::play() {
 		arduboy.drawBitmap(96, 0, B_PRESSED_ICON, 16, 16, WHITE);
 	}
 	
+	//if (anything_pressed()) sound.tones(key);
+	
 	// check for next button press needed
 	uint8_t next_index = 0;
 	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
@@ -100,27 +182,35 @@ void Game::play() {
 		if (button_queue[next_index].button == 1 && arduboy.justPressed(UP_BUTTON)) {
 			button_queue[next_index].button = 0;
 			score++;
+			sound.tone(260, 100);
 		} else if (button_queue[next_index].button == 2 && arduboy.justPressed(DOWN_BUTTON)) {
 			button_queue[next_index].button = 0;
 			score++;
+			sound.tone(294, 100);
 		} else if (button_queue[next_index].button == 3 && arduboy.justPressed(LEFT_BUTTON)) {
 			button_queue[next_index].button = 0;
 			score++;
+			sound.tone(330, 100);
 		} else if (button_queue[next_index].button == 4 && arduboy.justPressed(RIGHT_BUTTON)) {
 			button_queue[next_index].button = 0;
 			score++;
+			sound.tone(350, 100);
 		} else if (button_queue[next_index].button == 5 && arduboy.justPressed(A_BUTTON)) {
 			button_queue[next_index].button = 0;
 			score++;
+			sound.tone(392, 100);
 		} else if (button_queue[next_index].button == 6 && arduboy.justPressed(B_BUTTON)) {
 			button_queue[next_index].button = 0;
 			score++;
+			sound.tone(440, 100);
 		} else if (anything_pressed()) {
 			game_state = 2;
+			sound.tones(game_over);
 			return;
 		}
 	} else if (anything_pressed()) {
 		game_state = 2;
+		sound.tones(game_over);
 		return;
 	}
 	
@@ -152,6 +242,7 @@ void Game::play() {
 		
 		if (button_queue[i].coords[1] < -16) {
 			game_state = 2;
+			sound.tones(game_over);
 			return;
 		}
 

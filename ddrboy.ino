@@ -1,9 +1,12 @@
 #include <Arduboy2.h>
+#include <ArduboyTones.h>
 #include "globals.h"
 #include "game.h"
+#include "sounds.h"
 
 Arduboy2 arduboy;
-Game game(arduboy);
+ArduboyTones sound(arduboy.audio.enabled);
+Game game(arduboy, sound);
 
 void setup() {
 	arduboy.begin();
@@ -11,6 +14,7 @@ void setup() {
 	arduboy.setTextWrap(true);
 	arduboy.initRandomSeed();
 	game.read_highscore();
+	game.sound_on = arduboy.audio.enabled();
 }
 
 void loop() {
@@ -30,6 +34,10 @@ void loop() {
 
 		case 2:
 			game.win();
+			break;
+			
+		case 3:
+			game.select_difficulty();
 			break;
 
 		default:
