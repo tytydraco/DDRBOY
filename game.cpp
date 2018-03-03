@@ -33,7 +33,7 @@ void Game::menu() {
 			arduboy.audio.off();
 		} else {
 			arduboy.audio.on();
-			sound.tones(ok);
+			sound.tones(SOUND_OK);
 		}
 		sound_on = !sound_on;
 	}
@@ -43,7 +43,7 @@ void Game::menu() {
 	// difficulty select
 	if (arduboy.justPressed(A_BUTTON)) {
 		game_state = 3;
-		sound.tones(ok);
+		sound.tones(SOUND_OK);
 	}
 	
 	// reset highscore
@@ -87,33 +87,16 @@ void Game::select_difficulty() {
 		case 4:
 			arduboy.setCursor(10, 22);
 			arduboy.println(DIFFICULTY_4_NAME);
-			break;
 		default:
 			break;
 	}
 	
 	// play
 	if (arduboy.justPressed(A_BUTTON)) {
-		switch (difficulty) {
-			case 1:
-				arduboy.setFrameRate(DIFFICULTY_1_FPS);
-				break;
-			case 2:
-				arduboy.setFrameRate(DIFFICULTY_2_FPS);
-				break;
-			case 3:
-				arduboy.setFrameRate(DIFFICULTY_3_FPS);
-				break;
-			case 4:
-				arduboy.setFrameRate(DIFFICULTY_4_FPS);
-				break;
-			default:
-				break;
-		}
 		randomize();
 		game_state = 1;
 		score = 0;
-		sound.tones(start);
+		sound.tones(SOUND_START);
 	} else if (arduboy.justPressed(B_BUTTON)) {
 		game_state = 0;
 	}
@@ -130,6 +113,159 @@ void Game::randomize() {
 
 void Game::play() {
 	// print the target buttons
+	draw_top_buttons();
+		
+	// check for next button press needed
+	uint8_t next_index = get_next_button_index();
+	play_button_click_checks(next_index);
+	
+	// move the buttons
+	move_play_buttons();
+	
+	// now draw the buttons
+	draw_play_buttons();
+		
+	// show score
+	draw_score();
+}
+
+void Game::play_button_click_checks(uint8_t next_index) {
+	// detect the press and check
+	if (button_queue[next_index].coords[1] <= 16 && button_queue[next_index].coords[1] >= -16) {
+		if (button_queue[next_index].button == 1 && arduboy.justPressed(UP_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+			sound.tone(260, 100);
+		} else if (button_queue[next_index].button == 2 && arduboy.justPressed(DOWN_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+			sound.tone(294, 100);
+		} else if (button_queue[next_index].button == 3 && arduboy.justPressed(LEFT_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+			sound.tone(330, 100);
+		} else if (button_queue[next_index].button == 4 && arduboy.justPressed(RIGHT_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+			sound.tone(350, 100);
+		} else if (button_queue[next_index].button == 5 && arduboy.justPressed(A_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+			sound.tone(392, 100);
+		} else if (button_queue[next_index].button == 6 && arduboy.justPressed(B_BUTTON)) {
+			button_queue[next_index].button = 0;
+			score++;
+			sound.tone(440, 100);
+		} else if (anything_pressed()) {
+			game_state = 2;
+			sound.tones(SOUND_GAME_OVER);
+			return;
+		}
+	} else if (anything_pressed()) {
+		game_state = 2;
+		sound.tones(SOUND_GAME_OVER);
+		return;
+	}
+	
+	// recreate after we know button it is clicked properly
+	// this avoids regenerating even when the user didnt click the button yet
+	if (anything_pressed()) {
+		// find which y coordinate is the farthest down (highest in y)
+		int lowest_button_y = 0;
+		for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
+			if (button_queue[i].coords[1] > lowest_button_y) lowest_button_y = button_queue[i].coords[1];
+		}
+		
+		// place this button just below the lowest button
+		// this solves the error with misaligned buttons
+		uint8_t random_button = random(MIN_RANDOMIZE, MAX_RANDOMIZE);
+		button_queue[next_index].button = random_button; //1-6 L,R,U,D,A,B
+		button_queue[next_index].coords[0] = random_button * 16;
+		button_queue[next_index].coords[1] = lowest_button_y + 16;
+	}
+}
+
+uint8_t Game::get_next_button_index() {
+	uint8_t next_index = 0;
+	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
+		if (button_queue[i].button != 0 && button_queue[i].coords[1] <= 16 && button_queue[i].coords[1] >= -16) {
+			next_index = i;
+			break; 
+		}
+	}
+	return next_index;
+}
+
+void Game::draw_score() {
+	arduboy.setTextSize(1);
+	arduboy.setCursor(0, HEIGHT - 7);
+	arduboy.print(score);
+}
+
+void Game::move_play_buttons() {
+	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
+		// move buttons based on difficulty
+		switch (difficulty) {
+			case 1:
+				if (arduboy.everyXFrames(3))
+					button_queue[i].coords[1]--;
+				break;
+			case 2:
+				if (arduboy.everyXFrames(2))
+					button_queue[i].coords[1]--;
+				break;
+			case 3:
+				button_queue[i].coords[1]--;
+				break;
+			case 4:
+				button_queue[i].coords[1] -= 2;
+				break;
+			default:
+				break;
+		}
+		
+		if (button_queue[i].coords[1] < -16) {
+			game_state = 2;
+			sound.tones(SOUND_GAME_OVER);
+			return;
+		}
+	}	
+}
+
+void Game::draw_play_buttons() {
+	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
+		int x = button_queue[i].coords[0];
+		int y = button_queue[i].coords[1];
+		if (button_queue[i].coords[1] >= -16) {
+			switch (button_queue[i].button) {
+				case 0:
+					break;
+				case 1:
+					arduboy.drawBitmap(x, y, UP_ARROW, 16, 16, WHITE);
+					break;
+				case 2:
+					arduboy.drawBitmap(x, y, DOWN_ARROW, 16, 16, WHITE);
+					break;
+				case 3:
+					arduboy.drawBitmap(x, y, LEFT_ARROW, 16, 16, WHITE);
+					break;
+				case 4:
+					arduboy.drawBitmap(x, y, RIGHT_ARROW, 16, 16, WHITE);
+					break;
+				case 5:
+					arduboy.drawBitmap(x, y, A_ICON, 16, 16, WHITE);
+					break;
+				case 6:
+					arduboy.drawBitmap(x, y, B_ICON, 16, 16, WHITE);
+					break;
+				default:
+					break;
+			}
+		}
+	}
+}
+
+void Game::draw_top_buttons() {
 	if (arduboy.pressed(UP_BUTTON)) {
 		arduboy.drawBitmap(16, 0, UP_ARROW, 16, 16, WHITE);
 	} else {
@@ -165,127 +301,12 @@ void Game::play() {
 	} else {
 		arduboy.drawBitmap(96, 0, B_PRESSED_ICON, 16, 16, WHITE);
 	}
-	
-	//if (anything_pressed()) sound.tones(key);
-	
-	// check for next button press needed
-	uint8_t next_index = 0;
-	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
-		if (button_queue[i].button != 0 && button_queue[i].coords[1] <= 16 && button_queue[i].coords[1] >= -16) {
-			next_index = i;
-			break; 
-		}
-	}
-		
-	// detect the press and check
-	if (button_queue[next_index].coords[1] <= 16 && button_queue[next_index].coords[1] >= -16) {
-		if (button_queue[next_index].button == 1 && arduboy.justPressed(UP_BUTTON)) {
-			button_queue[next_index].button = 0;
-			score++;
-			sound.tone(260, 100);
-		} else if (button_queue[next_index].button == 2 && arduboy.justPressed(DOWN_BUTTON)) {
-			button_queue[next_index].button = 0;
-			score++;
-			sound.tone(294, 100);
-		} else if (button_queue[next_index].button == 3 && arduboy.justPressed(LEFT_BUTTON)) {
-			button_queue[next_index].button = 0;
-			score++;
-			sound.tone(330, 100);
-		} else if (button_queue[next_index].button == 4 && arduboy.justPressed(RIGHT_BUTTON)) {
-			button_queue[next_index].button = 0;
-			score++;
-			sound.tone(350, 100);
-		} else if (button_queue[next_index].button == 5 && arduboy.justPressed(A_BUTTON)) {
-			button_queue[next_index].button = 0;
-			score++;
-			sound.tone(392, 100);
-		} else if (button_queue[next_index].button == 6 && arduboy.justPressed(B_BUTTON)) {
-			button_queue[next_index].button = 0;
-			score++;
-			sound.tone(440, 100);
-		} else if (anything_pressed()) {
-			game_state = 2;
-			sound.tones(game_over);
-			return;
-		}
-	} else if (anything_pressed()) {
-		game_state = 2;
-		sound.tones(game_over);
-		return;
-	}
-	
-	
-	// recreate after we know button it is clicked properly
-	// this avoids regenerating even when the user didnt click the button yet
-	if (anything_pressed()) {
-		// find which y coordinate is the farthest down (highest in y)
-		int lowest_button_y = 0;
-		for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
-			if (button_queue[i].coords[1] > lowest_button_y) lowest_button_y = button_queue[i].coords[1];
-		}
-		
-		// place this button just below the lowest button
-		// this solves the error with misaligned buttons
-		uint8_t random_button = random(MIN_RANDOMIZE, MAX_RANDOMIZE);
-		button_queue[next_index].button = random_button; //1-6 L,R,U,D,A,B
-		button_queue[next_index].coords[0] = random_button * 16;
-		button_queue[next_index].coords[1] = lowest_button_y + 16;
-	}
-	
-
-	// move the buttons
-	for (size_t i = 0; i < (sizeof(button_queue) / sizeof(button_queue[0])); i++) {
-		button_queue[i].coords[1]--;
-		
-		int x = button_queue[i].coords[0];
-		int y = button_queue[i].coords[1];
-		
-		if (button_queue[i].coords[1] < -16) {
-			game_state = 2;
-			sound.tones(game_over);
-			return;
-		}
-
-		// now draw the buttons
-		if (button_queue[i].coords[1] >= -16) {
-			switch (button_queue[i].button) {
-				case 0:
-					break;
-				case 1:
-					arduboy.drawBitmap(x, y, UP_ARROW, 16, 16, WHITE);
-					break;
-				case 2:
-					arduboy.drawBitmap(x, y, DOWN_ARROW, 16, 16, WHITE);
-					break;
-				case 3:
-					arduboy.drawBitmap(x, y, LEFT_ARROW, 16, 16, WHITE);
-					break;
-				case 4:
-					arduboy.drawBitmap(x, y, RIGHT_ARROW, 16, 16, WHITE);
-					break;
-				case 5:
-					arduboy.drawBitmap(x, y, A_ICON, 16, 16, WHITE);
-					break;
-				case 6:
-					arduboy.drawBitmap(x, y, B_ICON, 16, 16, WHITE);
-					break;
-				default:
-					break;
-			}
-		}
-	}	
-		
-	// run timer once first pressed
-	arduboy.setTextSize(1);
-	arduboy.setCursor(0, HEIGHT - 7);
-	arduboy.print(score);
 }
 
 void Game::win() {
 	arduboy.setTextSize(1);
 	arduboy.print(score);
     arduboy.print("PTS");
-	timer_active = false;
 	arduboy.setTextSize(3);
 	arduboy.setCursor(30, 10);
 	arduboy.println("GAME");
