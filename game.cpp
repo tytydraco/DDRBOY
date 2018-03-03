@@ -36,7 +36,7 @@ void Game::menu() {
 			sound.tones(SOUND_OK);
 		}
 		sound_on = !sound_on;
-	}
+	} 
 	
 	arduboy.drawBitmap(WIDTH - 16, HEIGHT - 16, A_ICON, 16, 16, WHITE);
 	
@@ -54,6 +54,8 @@ void Game::menu() {
 			read_highscore();
 			reset_highscore_hold = 0;
 		}
+	} else if (arduboy.notPressed(B_BUTTON)) {
+		reset_highscore_hold = 0;
 	}
 }
 
